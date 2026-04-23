@@ -1,182 +1,273 @@
-# 🌿 Deforestation Archetype Discovery
+# Deforestation Archetype Discovery
 
-Unsupervised discovery of deforestation archetypes using event-level spatial morphology and clustering.
+## Team
 
----
+- Akash Sagi
+- Sakethram Naidu
+
+
+## Project Summary
+
+This project studies deforestation as an event-level pattern discovery problem. Instead of only detecting where forest loss happens, we extract connected deforestation events, measure their geometric and visual properties, and use unsupervised learning to discover recurring deforestation archetypes.
 
 ## Overview
 
-Global forest monitoring systems (e.g., Hansen GFC) detect **where** and **when** forest loss occurs, but not **what kind** of loss it is.
+Global forest monitoring systems such as Hansen Global Forest Change detect where and when forest loss occurs, but not what kind of loss it is.
 
-This project reframes deforestation as an **event-level pattern discovery problem**.  
-Instead of pixel-wise detection, we analyze connected deforestation events and uncover recurring **geometric archetypes** using unsupervised learning.
+This project reframes deforestation as an event-level pattern discovery problem. Instead of treating forest loss as isolated pixels, we group connected deforestation events and uncover recurring geometric archetypes using unsupervised learning.
 
----
-
-## 📂 Dataset
+## Dataset
 
 ### Data Sources
 
-- **Hansen Global Forest Change (GFC)**
-  - Annual forest loss maps from Landsat imagery  
-  - Spatial resolution: **30 meters**
-
-- **Sentinel-2 (optional refinement)**
-  - Higher resolution imagery (**10–20 meters**)
-
----
+- Hansen Global Forest Change for annual forest loss maps at 30 meter resolution
+- Sentinel-2 imagery for optional higher-resolution visual refinement at 10 to 20 meter resolution
+- SpaceNet 7 data used in the current pipeline and download workflow
 
 ### Unit of Analysis
 
-We convert pixel-level forest loss into **event-level patches**:
+We convert pixel-level forest loss into event-level patches:
 
-1. Forest loss map → binary raster  
-2. Connected components → group neighboring pixels  
-3. Event patch → one deforestation event  
+1. Forest loss map to binary raster
+2. Connected components to grouped neighboring loss pixels
+3. Event patch to one deforestation event
 
----
+### Feature Representation
 
-### Feature Dataset
+Each event is represented with geometric and context-aware features such as:
 
-Each event is represented using:
-
-- Area  
-- Compactness  
-- Eccentricity  
-- Aspect Ratio  
-- Edge Density  
-- Mask Fraction  
-
----
+- Area
+- Compactness
+- Eccentricity
+- Aspect ratio
+- Edge density
+- Mask fraction
 
 ### Dataset Scale
 
-- Thousands of event patches  
-- Extended evaluation: **~15,000 global events**
+- Thousands of event patches in the core experiments
+- Extended evaluation on approximately 15,000 global events
 
----
+## Quick Results
 
-### Access
+- 14 clusters discovered from event-level features
+- Approximately 5.6% of events were labeled as noise
+- The discovered archetypes include linear, blocky, and fragmented patterns that may correspond to different deforestation processes
 
-Full datasets and outputs:  
-https://drive.google.com/drive/folders/1JmSbuaztQJrZbZ-y1q3aQ5b4uqqN-6eX?usp=drive_link
+## Key Idea
 
----
+Event shape can encode the underlying deforestation process.
 
-## 💡 Key Idea
+Different drivers such as agriculture, roads, and logging can produce distinct spatial patterns, so clustering event geometry provides a way to discover deforestation archetypes without manual labels.
 
-> Event shape encodes the underlying deforestation process.
-
-Different drivers (e.g., agriculture, roads, logging) produce distinct spatial patterns.
-
----
-
-## 🧠 Method
+## Method
 
 ### 1. Event Extraction
-- Hansen GFC → connected components  
+
+- Convert forest loss maps into connected deforestation components
 
 ### 2. Feature Engineering
-- Compute geometric features per event  
+
+- Compute event-level geometric features
+- Compute visual and contextual features from the extracted event crops
 
 ### 3. Clustering
-- **HDBSCAN**
-- No predefined cluster count  
-- Handles noise  
 
----
+- HDBSCAN for unsupervised clustering
+- No predefined number of clusters required
+- Robust handling of noise points
 
-## 📊 Results
+### 4. Interpretation
 
-- **14 clusters discovered**  
-- **5.6% noise**  
-- Clear separation (UMAP)
+- Visualize cluster galleries
+- Summarize cluster statistics
+- Inspect mean masks and representative event samples
 
-### Stability
-- ARI ≈ **0.658**
+## Visualizations
 
-### Learnability
-- kNN accuracy: **98.24%**
+Project result figures:
 
----
+![UMAP Archetypes](result-images/hansen_archetypes_umap.png)
+![Cluster Stability ARI](result-images/cluster_stability_ari.png)
+![KNN Confusion Matrix](result-images/knn_confusion_matrix.png)
+![Risk Model ROC](result-images/risk_model_roc.png)
+![High Risk Fraction By Cluster](result-images/high_risk_fraction_by_cluster.png)
 
-### Interpretation
+Sample archetype galleries from the generated outputs:
 
-| Archetype   | Likely Process          |
-|------------|------------------------|
-| Linear     | Roads & infrastructure |
-| Blocky     | Agriculture            |
-| Fragmented | Logging                |
+![Cluster 00 Gallery](outputs/archetypes/cluster_00_gallery.png)
+![Cluster 02 Gallery](outputs/archetypes/cluster_02_gallery.png)
+![Cluster 07 Gallery](outputs/archetypes/cluster_07_gallery.png)
+![Cluster Noise Gallery](outputs/archetypes/cluster_noise_gallery.png)
 
-> ⚠️ Interpretations, not ground truth.
+Additional result images are available in `result-images/` and `outputs/archetypes/`.
 
----
+## Interpretation
 
-## 🌍 Generalization
+Example archetype interpretations from the discovered clusters:
 
-- Tested on **15,000-event global dataset**
-- Structure persists with noise
+| Archetype | Likely Process |
+|-----------|----------------|
+| Linear | Roads and infrastructure |
+| Blocky | Agriculture |
+| Fragmented | Logging |
 
----
+These interpretations are exploratory and are not ground-truth labels.
 
-## ⚠️ Risk Model (Exploratory)
+## Generalization
 
-- ROC-AUC: **0.994**
+- The archetype structure was also evaluated on a larger global event set
+- The clustering structure persists even with additional noise and scale variation
 
-> ⚠️ Not independent validation (same feature space)
+## Risk Model
 
----
+As an exploratory extension, the project also studies cluster-level risk behavior:
 
-## 📁 Repository Structure
+- ROC-AUC approximately 0.994 in the reported experiment
+- High-risk fractions differ across discovered clusters
 
-This repository is organized into three main components: pipeline code (`src/`), outputs (`outputs/`), and experiment notebook.
+This is not an independent validation setting because it uses the same feature space as the clustering pipeline.
 
+## Folder Structure
+
+```text
+deforestation-archetypes/
+|-- Deforestation_archetypes_clean.ipynb
+|-- deforestation_archetypes_presentation.pptx
+|-- download_data.py
+|-- README.md
+|-- SS24BC_SN24I_Deforestation Archetypes_Report.pdf
+|-- sn7_imagepair_manifest.csv
+|-- outputs/
+|   `-- archetypes/
+|       |-- cluster_00_gallery.png
+|       |-- cluster_00_meanmask.png
+|       |-- cluster_01_gallery.png
+|       |-- cluster_01_meanmask.png
+|       |-- cluster_02_gallery.png
+|       |-- cluster_02_meanmask.png
+|       |-- cluster_03_gallery.png
+|       |-- cluster_03_meanmask.png
+|       |-- cluster_04_gallery.png
+|       |-- cluster_04_meanmask.png
+|       |-- cluster_05_gallery.png
+|       |-- cluster_05_meanmask.png
+|       |-- cluster_06_gallery.png
+|       |-- cluster_06_meanmask.png
+|       |-- cluster_07_gallery.png
+|       |-- cluster_07_meanmask.png
+|       |-- cluster_08_gallery.png
+|       |-- cluster_08_meanmask.png
+|       |-- cluster_09_gallery.png
+|       |-- cluster_09_meanmask.png
+|       |-- cluster_10_gallery.png
+|       |-- cluster_10_meanmask.png
+|       |-- cluster_noise_gallery.png
+|       |-- cluster_noise_meanmask.png
+|       |-- cluster_stats.csv
+|       |-- event_clusters_shapeonly.csv
+|       `-- README.txt
+|-- result-images/
+|   |-- cluster_stability_ari.png
+|   |-- hansen_archetypes_umap.png
+|   |-- high_risk_fraction_by_cluster.png
+|   |-- knn_confusion_matrix.png
+|   `-- risk_model_roc.png
+`-- src/
+    |-- build_manifest_sn7.py
+    |-- build_manifest_sn7_from_images.py
+    |-- extract_events.py
+    |-- step2_tile_pairs.py
+    |-- step3_build_change_masks_from_geojson.py
+    |-- step3_build_change_masks_from_geojson_pixel.py
+    |-- step4_extract_events.py
+    |-- step4_extract_events_pixel.py
+    |-- step5_extract_event_features.py
+    |-- step6_cluster_events.py
+    `-- step7_interpret_clusters.py
 ```
-.
-├── Deforestation_archetypes_clean.ipynb
-├── download_data.py
-├── sn7_imagepair_manifest.csv
-├── README.md
 
-├── src/
-│   ├── build_manifest_sn7.py
-│   ├── extract_events.py
-│   ├── step2_tile_pairs.py
-│   ├── step3_build_change_masks_from_geojson.py
-│   ├── step4_extract_events.py
-│   ├── step5_extract_event_features.py
-│   ├── step6_cluster_events.py
-│   └── step7_interpret_clusters.py
+## How To Run The Project
 
-├── outputs/
-│   ├── archetypes/
-│   │   ├── cluster_XX_gallery.png
-│   │   ├── cluster_XX_meanmask.png
-│   │   ├── cluster_stats.csv
-│   │   └── event_clusters_shapeonly.csv
-│   └── gallery/
+The easiest way to run this project is in Google Colab.
+
+### Option 1: Run the notebook in Colab
+
+1. Clone or upload this repository to Google Drive.
+2. Rename the project folder to `deforestation_archetypes` if needed.
+3. Place the folder at `MyDrive/deforestation_archetypes` because the notebook and scripts use that exact path.
+4. Open `Deforestation_archetypes_clean.ipynb` in Google Colab.
+5. Mount Google Drive in Colab when prompted.
+6. Run the notebook cells in order from top to bottom.
+7. If the dataset is not already present in Drive, run the data download step first.
+
+Expected project location in Colab:
+
+```text
+/content/drive/MyDrive/deforestation_archetypes
 ```
 
----
+### Option 2: Run the scripts manually
 
-## ⚙️ Tech Stack
+The scripts in `src/` are also organized as a step-by-step pipeline:
 
-- Python  
-- NumPy, Pandas  
-- scikit-learn  
-- HDBSCAN  
-- UMAP  
-- Matplotlib  
+1. Build or load the dataset manifest
+2. Create tile pairs and change masks
+3. Extract deforestation events
+4. Extract event-level features and embeddings
+5. Cluster events into archetypes
+6. Interpret and visualize cluster outputs
 
----
+These scripts currently assume the same Colab/Drive project root:
 
-## 🚀 Key Takeaway
+```text
+/content/drive/MyDrive/deforestation_archetypes
+```
 
-> Deforestation is not random — it has structure that can be discovered and interpreted.
+## Data Download Instructions
 
----
+This repository does not store the full dataset directly in GitHub.
 
-## 👤 Authors
+Use one of the following data access methods:
 
-- Akash Sagi  
-- Sakethram Naidu  
+- Run `download_data.py` to download SpaceNet 7 data into your Google Drive project folder
+- Access the project data and outputs here: [Google Drive folder](https://drive.google.com/drive/folders/1JmSbuaztQJrZbZ-y1q3aQ5b4uqqN-6eX?usp=drive_link)
+
+`download_data.py` is currently configured to download into:
+
+```text
+/content/drive/MyDrive/deforestation_archetypes/data
+```
+
+## Setup Notes
+
+If you run this in Colab, install any missing Python packages in a setup cell before executing the rest of the notebook. The project uses:
+
+- Python
+- NumPy
+- Pandas
+- scikit-learn
+- HDBSCAN
+- UMAP
+- Matplotlib
+- rasterio
+- scikit-image
+- PyTorch
+- torchvision
+- boto3
+
+## Outputs
+
+Current clustering outputs are written under `outputs/archetypes/`, including:
+
+- `event_clusters_shapeonly.csv`
+- `cluster_stats.csv`
+- `cluster_XX_gallery.png`
+- `cluster_XX_meanmask.png`
+
+## Slides And Final Report
+
+- Presentation slides: `deforestation_archetypes_presentation.pptx`
+- Final report: `SS24BC_SN24I_Deforestation Archetypes_Report.pdf`
+
+
